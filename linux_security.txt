@@ -128,7 +128,8 @@ Generating Key Pairs
 We'll generate key pair on local machine. never share. if generated on server it was not always private.
 We generate key using ssh-keygen
 You will first be asked to give filename for the key pair --> /home/tdk/.ssh/id_rsa
-Then give password --> just in case someone happens to get these files. This pass phrase will stop them from using them.
+Then give password --> kaushal
+just in case someone happens to get these files. This pass phrase will stop them from using them.
 Once done you'll see ssh-keygen has generated too files id_rsa and id_rsa.pub
 We'll place id_rsa.pub on server to enable key based authentication
 
@@ -139,3 +140,34 @@ ECDSA
 RSA
 ED25519
 SHA256 and MD5 are hashing algorithms that are not suitable for public key encryption
+
+
+Installing Public Key
+we do it manually
+create .ssh in home directory of student
+mkdir .ssh
+This is a special directory where all of your key related files must be stored 
+Then create a new file in this dir called authorized_keys
+touch .ssh/authorized_keys
+This is another special file that will store all of the public keys that this accound is allowed to use for authentication, with one key per line in that file
+Now back on local machine
+read out the contents on id_rsa.pub, copy that and paste in .ssh/authorized_keys using nano
+nano .ssh/authorized_keys
+student@vagrant-ubuntu-trusty-64:~$ ls -al
+total 32
+drwxr-xr-x 4 student student 4096 Sep 14 20:57 .
+drwxr-xr-x 5 root    root    4096 Sep 14 19:59 ..
+-rw------- 1 student student   21 Sep 14 20:43 .bash_history
+-rw-r--r-- 1 student student  220 Sep 14 19:59 .bash_logout
+-rw-r--r-- 1 student student 3637 Sep 14 19:59 .bashrc
+drwx------ 2 student student 4096 Sep 14 20:14 .cache
+-rw-r--r-- 1 student student  675 Sep 14 19:59 .profile
+drwxrwxr-x 2 student student 4096 Sep 14 21:00 .ssh
+student@vagrant-ubuntu-trusty-64:~$ ls -al .ssh/authorized_keys 
+-rw-rw-r-- 1 student student 588 Sep 14 21:05 .ssh/authorized_keys
+
+The final thing that we need to do is set up some specific file permissions on the authorized key file and the ssh directory. This is a security measure that ssh enforces to ensure other users cannot gain access to you account.
+chmod 700 .ssh
+chmod 644 .ssh/authorized_keys
+We are done now we can login as student with key by
+ssh student@127.0.0.1 -p 2222 -i ~/.ssh/id_rsa
