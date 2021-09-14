@@ -70,3 +70,72 @@ INtroduction to User Management
 It's a common pattern to diable ability to log in as root, and to only login as a different user that has the ability to use Sudo. This is a security measure since every bad guy out there knows every linux box has user named root. By disabling this account from remote login we remove a very easy attack vector. Now vagrant took care of this for us. They created a user name vagrant and we just type vagrant ssh from our terminal to automatically connect. BUt not every hosting provider is going to set something like this up for you. SO let's do this ourselves.
 
 
+Creating a New User
+sudo adduser student
+give password: student
+additional info will be asked can leave it to default or add something
+confirm by
+finger student
+
+
+Connecting as the New User
+ssh student@127.0.0.1 -p 2222
+ssh --> application to connect remotely
+student@ --> user
+127.0.0.1 --> ip, local
+-p 2222 --> port 2222
+When vagrant setup our machine it automatically set up this port on our local machine to forward to the virtual machine
+
+
+INtroduction to etc sudoers
+Student can't run sudo
+sudo cat /etc/passwd gives error
+We switch back to user vagrant which can run sudo
+User list allowed to do sudo is in
+/etc/sudoers file
+sudo cat /etc/sudoers
+We see root there. In some system we can student in this file similar to how root is present using vi sudo
+But ubuntu handles it differently. Bottom line says
+#includedir /etc/sudoers.d
+This is a common pattern helps prevent issue when distribution updates happen and /etc/sudoers file changes users lost
+sudo ls /etc/sudoers.d
+shows vagrant is there
+
+
+Giving Sudo Access
+First copy vagrant file and name it student and then edit it to replace vagrant with student inside file
+sudo cp /etc/sudoers.d/vagrant /etc/sudoers.d/student
+sudo nano /etc/sudoers.d/student
+Now sudo works in student
+sudo cat /etc/passwd works
+
+
+Resetting Passwords
+User can reset his password using passwd
+To force student user password to expire
+sudo passwd -e student
+
+
+ANother Authentication Method
+Hackers can try guessing user and password. Better way is key based authentication. Which depends on physical files in your local system and server
+
+
+Public Key Encryption
+The server sends a random message to client, client encrypts it with private key and send it back. Server will decrypt it with their public key and if that value same as they sent. everything check outs and client is authenticated.
+
+
+Generating Key Pairs
+We'll generate key pair on local machine. never share. if generated on server it was not always private.
+We generate key using ssh-keygen
+You will first be asked to give filename for the key pair --> /home/tdk/.ssh/id_rsa
+Then give password --> just in case someone happens to get these files. This pass phrase will stop them from using them.
+Once done you'll see ssh-keygen has generated too files id_rsa and id_rsa.pub
+We'll place id_rsa.pub on server to enable key based authentication
+
+
+Supported Key Types
+DSA
+ECDSA
+RSA
+ED25519
+SHA256 and MD5 are hashing algorithms that are not suitable for public key encryption
