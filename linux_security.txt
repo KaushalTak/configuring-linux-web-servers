@@ -1,0 +1,72 @@
+The Rule of least privilege
+Specific has only permissions required by him thats it
+
+
+Becoming a super user
+We don't sign in as super user / root but another user who can run command as super user  using root. helps prevent hacking
+
+
+sudo vs. su
+Best practice to not use su command. You can forget you are su and can do damage. No warnings are given.
+
+
+Package Source list
+List of various places we can go to get software. Package source list. All available package sources are listed in
+cat /etc/apt/sources.list
+Each of the rpos in above list will be referenced when we try to update or install new software
+
+
+Updating available package list
+Keep software upto date for security. Most don't update because changes may caause issue.
+update by 
+sudo apt-get update
+The update command will run through all of the reposwe saw within /etc/apt/sources.list file, and it will check what all the software is available and what verions. THis command makes no changes to system. Just makes aware of latest software and versions
+
+
+Upgrading Installed Packages
+sudo apt-get upgrade
+This early in the system you can upgrade everything. Later on when you actually have your web application running on this system, review list and test on non-production server.
+
+
+Other Package Related Tasks
+apt-get application is main interface to packages related stuff
+check what by 
+man apt-get
+remove packages not required anymore by 
+sudo apt-get autoremove
+Install finger
+sudo apt-get install finger
+
+
+Discovering Packages
+Ubuntu Packages search on website
+https://packages.ubuntu.com/
+
+
+Using Finger
+finger displays info about users currently logged in
+can pass user name to display extra info
+
+
+Introduction to /etc/passwd/
+Finger gets this info from /etc/passwd/. It store info about each user
+cat /etc/passwd
+Each line entry for single user
+This is a very important file on your system! It's used to keep track of all users on the system. Run cat /etc/passwd and look at the output; each line is organized in this format:
+
+username:password:UID:GID:UID info:home directory:command/shell
+
+Let’s run through what each of those mean:
+username: the user’s login name
+password: the password, will simply be an x if it’s encrypted
+user ID (UID): the user’s ID number in the system. 0 is root, 1-99 are for predefined users, and 100-999 are for other system accounts
+group ID (GID): Primary group ID, stored in /etc/group.
+user ID info: Metadata about the user; phone, email, name, etc.
+home directory: Where the user is sent upon login. Generally /home/
+command/shell: The absolute path of a command or shell (usually /bin/bash). Does not have to be a shell though!
+
+
+INtroduction to User Management
+It's a common pattern to diable ability to log in as root, and to only login as a different user that has the ability to use Sudo. This is a security measure since every bad guy out there knows every linux box has user named root. By disabling this account from remote login we remove a very easy attack vector. Now vagrant took care of this for us. They created a user name vagrant and we just type vagrant ssh from our terminal to automatically connect. BUt not every hosting provider is going to set something like this up for you. SO let's do this ourselves.
+
+
