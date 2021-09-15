@@ -171,3 +171,150 @@ chmod 700 .ssh
 chmod 644 .ssh/authorized_keys
 We are done now we can login as student with key by
 ssh student@127.0.0.1 -p 2222 -i ~/.ssh/id_rsa
+
+
+Forcing Key Based Authentication
+Final thing you need to do to secure the authentication process is to disable the password based logins. This will force all the users to only be able to login using key pair.
+To do this you'll have to edit the configuration file for sshd. Which is the service that's running on the server listening for all the ssh connections.
+sudo nano /etc/ssh/sshd_config
+change
+PasswordAuthentication yes
+to 
+PasswordAuthentication no
+and save the file
+Now the sshd service is currently running, and it only reads this configuration file when it's initially started up. So we need to restart the service so that it runs with the new configuration option we just made
+sudo service ssh restart
+Now all users will be foreced to login using key pair
+
+
+Introduction to File Permissions
+chmod
+when we do ls -al we get permissions on file
+student@vagrant-ubuntu-trusty-64:~$ ls -al
+total 32
+drwxr-xr-x 4 student student 4096 Sep 14 20:57 .
+drwxr-xr-x 5 root    root    4096 Sep 14 19:59 ..
+-rw------- 1 student student   21 Sep 14 20:43 .bash_history
+-rw-r--r-- 1 student student  220 Sep 14 19:59 .bash_logout
+-rw-r--r-- 1 student student 3637 Sep 14 19:59 .bashrc
+drwx------ 2 student student 4096 Sep 14 20:14 .cache
+-rw-r--r-- 1 student student  675 Sep 14 19:59 .profile
+drwxrwxr-x 2 student student 4096 Sep 14 21:00 .ssh
+
+drwx------
+d means directory if it was - it meant file. then we have three sections of size 3 (total 9). for example rw- r-- r--
+first one is owner he has read write access, - in third place means he can't execute the file
+group in 2nd, group can only read
+3rd is everyone, they too can only read
+
+
+Owners and Groups
+How do we identify who the owner and the group are?
+drwx------ 2 student student 4096 Sep 14 20:14 .cache
+-rw-r--r-- 1 student student  675 Sep 14 19:59 .profile
+drwxrwxr-x 2 student student 4096 Sep 14 21:00 .ssh
+
+Here second and third columns are user and group for each entry in the list. Even though they have same name they are in two entirely different things. The system has username student, which is the owner of the file. And a group named student which was automatically created when created when we made this user. This common practice, same name for user and group.
+drwxr-xr-x 5 root    root    4096 Sep 14 19:59 ..
+It points to home directory /home that's owned by root. And only root user can write to it. We can enter the directory because we have execute access and read by ls. But not write
+
+
+Octal Permissions
+We can translate permissions to numbers
+r = 4
+w = 2
+x = 1
+No permissions mean 0
+By adding the numbers together, we end up with a result identifying the full set of permissions to apply
+So if want to give read and execute permissions 4+1=5
+Remember permissions are done in set of 3 --> individual, group and everyone
+For example .bashrc has permissions 
+-rw-r--r-- this will be converted to 644
+
+
+chgrp and chown
+What if we need to change a files group or owner? Through chown and chgrp (change group and owner)
+.bash_history stores all the recent history of all the commands user has typed
+The .bash_history file is created by the bash shell the first time you log out of your Linux system. This means that if you are logging into the system for the first time, it won't have been created yet. If you log out and log back in (e.g. vagrant ssh if you're using Vagrant here) then the file will be created.
+
+cat .bash_history
+we can read it write now, but if we change the group to root
+sudo chgrp root .bash_history
+We can still read it
+cat .bash_history
+The group has no permissions on this file, so there's pretty much no effect. Our ability to read this file right now is determined by the owner setting, not the group setting. BUt now if we chage owner from student to group
+sudo chown root .bash_history
+We can no longer view the content through
+cat .bash_history
+Now shange owner and group to student
+sudo chgrp student .bash_history
+sudo chown student .bash_history
+You can also experiment with chown and chgrp using another file. To create an empty file named testfile, use the command touch testfile.
+
+
+Intro to Ports
+YOu now have a server sitting out there on the internet and this server is doing a lot of different things and talking to other devices on the internet. Depending on your application it could be responding to web requests, database queries, sending and receiving email, let's not forget handling the ssh sessions we have been using this whole time. But how does your server know which application is in charge of handling each type of request?
+The answer is ports. Each of your applications are configured to respond to requests destined for a specific port. For example, a web server would by default respond on port 80, the default port for HTTP. We can control which ports our server is allowed to access request for, using and application called firewall.
+
+
+Default Ports for Popular Services
+HTTP 80
+HTTPS 443
+SSH 22
+POP3 110
+FTP 21
+SMTP 25
+
+
+Into to Firewalls
+Just because our server can listen on every single port, for any type of request, that doesn't mean we should.
+The rule of least privilege tells, we should only listen on ports required for our application to function correctly. 
+We can configure which ports we want our server to listen to using application called firewall.
+Let's say we have a firewall application which has ports 80, 21, 443 and 22. We currently have all the ports on file so we can't pass data from one side, internet, to another, my server.
+You can say I am denying all requests.
+BUt if I open one of these ports, like 80 here. I can now pass information through, the server on other side can now fully function as web server with added benefit of completely ignoring these requests that we know we are not interested in.
+
+
+Intro to UFW
+Ubuntu comes with firewall pre-installed called ufw. check status by
+sudo ufw status
+inactive right now
+Let's start adding some rules to our firewall then we'll turn it on. We can deny all incoming requests initially and then open only what we need, helps manage rule. We'll establish this default deny incoming, by this rule
+sudo ufw default deny incoming
+We can also establish default rule for our outgoing connections, any request our server is trying to send to internet. allow all outgoing rule by
+sudo ufw default allow outgoing
+ufw still inactive
+sudo ufw status
+If activate now, we'll be blocking all incoming connections including ssh, which means our server will be dead in the water and completely inaccessible to us.
+
+
+Configuring Ports in UFW
+Let's start allowing the ports we know we'll need for the applications our server will be supporting. 
+1. ssh, so we can continue administring this server
+sudo ufw allow ssh
+Go ahead and do that. BUt remember , we are using a Vagrant virtual machine and Vagrant set up our ssh on Port 2222.
+So will need to allow all TCP connections to port 2222 for ssh to actually work in out scenario here.
+sudo ufw allow 2222/tcp
+2. HTTP server, for now we only want to support this basic HTTP server, so we can allow this by using 
+sudo ufw allow www
+And after that we can enable our firewall with
+sudo ufw enable
+
+This step here can be little hair raising because our ssh client is reliant upon these rules being correct. If all of a sudden you lose your ssh connection to your server, it's pretty clear that you messed up some of you rules. Some cloud providers do offer a way to regain access to your system through an external control panel. But many others, you are just out of luck at this point.
+That's why configure your firewall pretty early in the server setup process.
+Finally we can confirm all of our rules are setup as we indicated by using 
+sudo ufw status 
+
+
+Conclusion:
+Based on your needs you can setup any type of server. Email servers, chat servers, web application servers. Generally only big difference between each of these is the software they have installed and the ports they have open
+
+"LAMP" Stack (Linux, Apache, MySQL, PHP)   --->   https://www.digitalocean.com/community/tutorials/how-to-install-linux-apache-mysql-php-lamp-stack-on-ubuntu-14-04
+
+"LEMP" Stack (Linux, nginx, MySQL, PHP)   --->   https://www.digitalocean.com/community/tutorials/how-to-install-linux-nginx-mysql-php-lemp-stack-on-ubuntu-14-04
+
+PEPS Mail and File Storage --> https://www.digitalocean.com/community/tutorials/how-to-run-your-own-mail-server-and-file-storage-with-peps-on-ubuntu-14-04
+
+Mail-in-a-Box Email Server  ---> https://www.digitalocean.com/community/tutorials/how-to-run-your-own-mail-server-with-mail-in-a-box-on-ubuntu-14-04
+
+Lita IRC Chat Bot  ---->  https://www.digitalocean.com/community/tutorials/how-to-install-the-lita-chat-bot-for-irc-on-ubuntu-14-04
